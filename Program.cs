@@ -1,13 +1,47 @@
-var builder = WebApplication.CreateBuilder(args);
+using CasaApp.Api.Data;
+using CasaApp.Api.Repositories;
+using CasaApp.Api.Services;
+using Microsoft.EntityFrameworkCore;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+#region Builder
+
+var builder = WebApplication.CreateBuilder(args);
+Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
+
+#endregion
+
+#region Configuration
+
+// 🔌 Leer cadena de conexión desde appsettings
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+#endregion
+
+#region Services
+
+// 📦 Inyección de dependencias: DbContext
+builder.Services.AddDbContext<CasaDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// 📦 Inyección de dependencias: Repositorios y Servicios
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+builder.Services.AddScoped<IMenuService, MenuService>();
+
+// 📦 AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
+// 📦 Controladores y Swagger
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+#endregion
+
+#region App
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 🌐 Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -15,30 +49,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+#endregion
