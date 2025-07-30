@@ -2,13 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CasaApp.Api.DTOs;
 
-public class CreatePlatoDto
+public class CreateIngredienteDto
 {
-    [Required(ErrorMessage = "El nombre del plato es obligatorio.")]
+    [Required(ErrorMessage = "El nombre del ingrediente es obligatorio.")]
     [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
     [RegularExpression(@"^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$", ErrorMessage = "Solo letras y espacios.")]
     public string Nombre { get; set; } = string.Empty;
-
-    [MinLength(1, ErrorMessage = "Debe incluir al menos un ingrediente.")]
-    public List<CreateIngredienteEnPlatoDto> Ingredientes { get; set; } = new();
 }

@@ -24,12 +24,25 @@ public class MenuRepository : IMenuRepository
 
     public async Task<PlatoDto> CreatePlatoAsync(CreatePlatoDto plato)
     {
-        var platoEntity = _mapper.Map<Plato>(plato);
+        try
+        { 
+            foreach (var ingrediente in plato.Ingredientes)
+            {
+                var exists = await _context.Ingredientes.AnyAsync(i => i.Id == ingrediente.IngredienteId);
+                if (!exists) throw new Exception($"El ingrediente no existe.");
+            }
+            var platoEntity = _mapper.Map<Plato>(plato);
 
-        _context.Platos.Add(platoEntity);
-        await _context.SaveChangesAsync();
-        var result = _mapper.Map<PlatoDto>(platoEntity);
-        return result;
+            _context.Platos.Add(platoEntity);
+            await _context.SaveChangesAsync();
+            var result = _mapper.Map<PlatoDto>(platoEntity);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message, ex);
+
+        }
     }
 
     public async Task<Plato?> GetPlatoWithIngredientesAsync(int id)
@@ -80,11 +93,26 @@ public class MenuRepository : IMenuRepository
         return await _context.Ingredientes.ToListAsync();
     }
 
-    public async Task<Ingrediente> CreateIngredienteAsync(Ingrediente ingrediente)
+    public async Task<IngredienteDto> CreateIngredienteAsync(CreateIngredienteDto ingrediente)
     {
-        _context.Ingredientes.Add(ingrediente);
-        await _context.SaveChangesAsync();
-        return ingrediente;
+        try
+        {
+            var exists = await _context.Ingredientes.AnyAsync(i => i.Nombre == ingrediente.Nombre);
+
+            if (exists)
+                throw new Exception("El ingrediente ya existe");
+
+            var ingredienteEntity = _mapper.Map<Ingrediente>(ingrediente);
+            _context.Ingredientes.Add(ingredienteEntity);
+            await _context.SaveChangesAsync();
+            var result = _mapper.Map<IngredienteDto>(ingrediente);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message, ex);
+        }
+
     }
 
     public async Task<Ingrediente?> GetIngredienteAsync(int id)

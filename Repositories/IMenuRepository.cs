@@ -12,7 +12,7 @@ public interface IMenuRepository
     Task<bool> UpdatePlatoAsync(int id, Plato plato);
     Task<bool> DeletePlatoAsync(int id);
     Task<IEnumerable<Ingrediente>> GetAllIngredientesAsync();
-    Task<Ingrediente> CreateIngredienteAsync(Ingrediente ingrediente);
+    Task<IngredienteDto> CreateIngredienteAsync(CreateIngredienteDto ingrediente);
     Task<Ingrediente?> GetIngredienteAsync(int id);
     Task<bool> UpdateIngredienteAsync(int id, Ingrediente ingrediente);
     Task<bool> DeleteIngredienteAsync(int id);

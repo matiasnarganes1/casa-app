@@ -63,7 +63,7 @@ public class MenuController : ControllerBase
     }
 
     [HttpPost("ingredientes")]
-    public async Task<IActionResult> CreateIngrediente([FromBody] Ingrediente ingrediente)
+    public async Task<IActionResult> CreateIngrediente([FromBody] CreateIngredienteDto ingrediente)
     {
         var created = await _service.CreateIngredienteAsync(ingrediente);
         return CreatedAtAction(nameof(GetIngredientes), new { id = created.Id }, created);

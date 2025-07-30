@@ -17,7 +17,7 @@ public class MenuProfile : Profile
                     UnidadMedida = i.UnidadMedida
                 }).ToList()));
 
-        CreateMap<Plato, CreatePlatoDto>();
+        CreateMap<CreateIngredienteDto, Ingrediente>();
 
         CreateMap<Plato, PlatoDto>()
             .ForMember(dest => dest.Ingredientes, opt => opt.MapFrom(src =>
@@ -27,5 +27,8 @@ public class MenuProfile : Profile
                     Nombre = pi.Ingrediente.Nombre,
                     Cantidad = $"{pi.Cantidad} {pi.UnidadMedida}"
                 }).ToList()));
+
+        CreateMap<CreateIngredienteDto, IngredienteDto>();
+        CreateMap<Ingrediente, IngredienteDto>();
     }
 }

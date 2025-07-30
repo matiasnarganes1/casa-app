@@ -27,7 +27,7 @@ public class MenuService : IMenuService
     public Task<bool> DeletePlatoAsync(int id) => _repo.DeletePlatoAsync(id);
     public Task<IEnumerable<Ingrediente>> GetAllIngredientesAsync() => _repo.GetAllIngredientesAsync();
 
-    public Task<Ingrediente> CreateIngredienteAsync(Ingrediente ingrediente) => _repo.CreateIngredienteAsync(ingrediente);
+    public Task<IngredienteDto> CreateIngredienteAsync(CreateIngredienteDto ingrediente) => _repo.CreateIngredienteAsync(ingrediente);
 
     public Task<Ingrediente?> GetIngredienteAsync(int id) => _repo.GetIngredienteAsync(id);
 
