@@ -26,11 +26,6 @@ public class MenuRepository : IMenuRepository
     {
         try
         { 
-            foreach (var ingrediente in plato.Ingredientes)
-            {
-                var exists = await _context.Ingredientes.AnyAsync(i => i.Id == ingrediente.IngredienteId);
-                if (!exists) throw new Exception($"El ingrediente no existe.");
-            }
             var platoEntity = _mapper.Map<Plato>(plato);
 
             _context.Platos.Add(platoEntity);
@@ -41,7 +36,6 @@ public class MenuRepository : IMenuRepository
         catch (Exception ex)
         {
             throw new Exception(ex.Message, ex);
-
         }
     }
 
@@ -53,15 +47,22 @@ public class MenuRepository : IMenuRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    public async Task<bool> AddIngredienteToPlatoAsync(int platoId, PlatoIngrediente ingrediente)
+    public async Task<Plato?> GetPlatoByName(string name)
     {
-        var exists = await _context.Platos.AnyAsync(p => p.Id == platoId);
-        var ingredienteExists = await _context.Ingredientes.AnyAsync(i => i.Id == ingrediente.IngredienteId);
+        return await _context.Platos.FirstOrDefaultAsync(p => p.Nombre == name);
+    }
 
-        if (!exists || !ingredienteExists) return false;
+    public async Task<bool> AddIngredienteToPlatoAsync(int platoId, CreateIngredienteEnPlatoDto ingrediente)
+    {
+        PlatoIngrediente ingredienteEntity = new PlatoIngrediente
+        {
+            PlatoId = platoId,
+            IngredienteId = ingrediente.IngredienteId,
+            Cantidad = ingrediente.Cantidad
+        };
 
-        ingrediente.PlatoId = platoId;
-        _context.PlatoIngredientes.Add(ingrediente);
+        ingredienteEntity.PlatoId = platoId;
+        _context.PlatoIngredientes.Add(ingredienteEntity);
         await _context.SaveChangesAsync();
         return true;
     }

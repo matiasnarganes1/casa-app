@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using CasaApp.Api.DTOs;
 using CasaApp.Api.Models;
 using CasaApp.Api.Repositories;
@@ -14,13 +15,45 @@ public class MenuService : IMenuService
     }
 
     public Task<IEnumerable<Plato>> GetAllPlatosAsync() => _repo.GetAllPlatosAsync();
+    public async Task<PlatoDto> CreatePlatoAsync(CreatePlatoDto plato)
+    {
+        try
+        {
+            var platoExists = await _repo.GetPlatoByName(plato.Nombre);
+            if (platoExists != null) throw new Exception("El plato ya existe");
 
-    public Task<PlatoDto> CreatePlatoAsync(CreatePlatoDto plato) => _repo.CreatePlatoAsync(plato);
+            foreach (var ingrediente in plato.Ingredientes)
+            {
+                var ingredienteExists = await _repo.GetIngredienteAsync(ingrediente.IngredienteId);
+                if (ingredienteExists == null) throw new Exception($"El ingrediente no existe.");
+            }
+            return await _repo.CreatePlatoAsync(plato);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al crear el plato: " + ex.Message, ex);
+        }
+    }
 
     public Task<Plato?> GetPlatoWithIngredientesAsync(int id) => _repo.GetPlatoWithIngredientesAsync(id);
 
-    public Task<bool> AddIngredienteToPlatoAsync(int platoId, PlatoIngrediente ingrediente)
-        => _repo.AddIngredienteToPlatoAsync(platoId, ingrediente);
+    public async Task<bool> AddIngredienteToPlatoAsync(int platoId, CreateIngredienteEnPlatoDto ingrediente)
+    {
+        try
+        {
+            var platoExists = await _repo.GetPlatoWithIngredientesAsync(platoId);
+            var ingredienteExists = await _repo.GetIngredienteAsync(ingrediente.IngredienteId);
+
+            if (platoExists == null) throw new Exception("El plato no existe.");
+            if (ingredienteExists == null) throw new Exception("El ingrediente no existe.");
+
+            return await _repo.AddIngredienteToPlatoAsync(platoId, ingrediente);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al agregar un ingrediente al plato: " + ex.Message, ex);
+        }
+    }
 
     public Task<bool> UpdatePlatoAsync(int id, Plato plato) => _repo.UpdatePlatoAsync(id, plato);
 
@@ -32,6 +65,6 @@ public class MenuService : IMenuService
     public Task<Ingrediente?> GetIngredienteAsync(int id) => _repo.GetIngredienteAsync(id);
 
     public Task<bool> UpdateIngredienteAsync(int id, Ingrediente ingrediente) => _repo.UpdateIngredienteAsync(id, ingrediente);
-    
+
     public Task<bool> DeleteIngredienteAsync(int id) => _repo.DeleteIngredienteAsync(id);
 }

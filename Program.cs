@@ -33,7 +33,11 @@ builder.Services.AddAutoMapper(typeof(Program));
 // 📦 Controladores y Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "CasaApp API", Version = "v1" });
+    c.EnableAnnotations();
+});
 
 #endregion
 

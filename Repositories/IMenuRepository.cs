@@ -7,8 +7,9 @@ public interface IMenuRepository
 {
     Task<IEnumerable<Plato>> GetAllPlatosAsync();
     Task<PlatoDto> CreatePlatoAsync(CreatePlatoDto plato);
+    Task<Plato?> GetPlatoByName(string name);
     Task<Plato?> GetPlatoWithIngredientesAsync(int id);
-    Task<bool> AddIngredienteToPlatoAsync(int platoId, PlatoIngrediente ingrediente);
+    Task<bool> AddIngredienteToPlatoAsync(int platoId, CreateIngredienteEnPlatoDto ingrediente);
     Task<bool> UpdatePlatoAsync(int id, Plato plato);
     Task<bool> DeletePlatoAsync(int id);
     Task<IEnumerable<Ingrediente>> GetAllIngredientesAsync();
