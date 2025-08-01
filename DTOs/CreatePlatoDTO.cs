@@ -8,7 +8,4 @@ public class CreatePlatoDto
     [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres.")]
     [RegularExpression(@"^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$", ErrorMessage = "Solo letras y espacios.")]
     public string Nombre { get; set; } = string.Empty;
-
-    [MinLength(1, ErrorMessage = "Debe incluir al menos un ingrediente.")]
-    public List<CreateIngredienteEnPlatoDto> Ingredientes { get; set; } = new();
 }

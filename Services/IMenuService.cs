@@ -5,15 +5,19 @@ namespace CasaApp.Api.Services;
 
 public interface IMenuService
 {
-    Task<IEnumerable<Plato>> GetAllPlatosAsync();
-    Task<PlatoDto> CreatePlatoAsync(CreatePlatoDto plato);
-    Task<Plato?> GetPlatoWithIngredientesAsync(int id);
-    Task<bool> AddIngredienteToPlatoAsync(int platoId, CreateIngredienteEnPlatoDto ingrediente);
-    Task<bool> UpdatePlatoAsync(int id, Plato plato);
+    Task<bool> CreateMenuAsync(CreateMenuDto dto);
+    Task<MenuDto?> GetMenuByIdAsync(int id);
+    Task<List<MenuDto>> GetAllMenusAsync();
+    Task<IEnumerable<PlatoDto>> GetAllPlatosAsync();
+    Task<bool> CreatePlatoAsync(CreatePlatoDto plato);
+    Task<PlatoDto?> GetPlatoWithIngredientesAsync(int id);
+    Task<bool> AddIngredienteToPlatoAsync(int platoId, List<CreateIngredienteEnPlatoDto> ingrediente);
+    Task<bool> UpdatePlatoAsync(int id, CreatePlatoDto plato);
     Task<bool> DeletePlatoAsync(int id);
-    Task<IEnumerable<Ingrediente>> GetAllIngredientesAsync();
-    Task<IngredienteDto> CreateIngredienteAsync(CreateIngredienteDto ingrediente);
-    Task<Ingrediente?> GetIngredienteAsync(int id);
-    Task<bool> UpdateIngredienteAsync(int id, Ingrediente ingrediente);
+    Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync();
+    Task<bool> CreateIngredienteAsync(CreateIngredienteDto ingrediente);
+    Task<IngredienteDto?> GetIngredienteAsync(int id);
+    Task<bool> UpdateIngredienteAsync(int id, CreateIngredienteDto ingrediente);
     Task<bool> DeleteIngredienteAsync(int id);
+    Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId);
 }

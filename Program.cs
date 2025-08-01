@@ -27,9 +27,6 @@ builder.Services.AddDbContext<CasaDbContext>(options =>
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 
-// 📦 AutoMapper
-builder.Services.AddAutoMapper(typeof(Program));
-
 // 📦 Controladores y Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -3,6 +3,7 @@ using System;
 using CasaApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasaApp.Api.Migrations
 {
     [DbContext(typeof(CasaDbContext))]
-    partial class CasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250731191926_AddMenuAndPlatoMenu")]
+    partial class AddMenuAndPlatoMenu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,11 +43,11 @@ namespace CasaApp.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("FechaFin")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("datetime(6)");
 
-                    b.Property<DateOnly>("FechaInicio")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -55,7 +58,7 @@ namespace CasaApp.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Menu", (string)null);
+                    b.ToTable("Menu");
                 });
 
             modelBuilder.Entity("CasaApp.Api.Models.Plato", b =>
@@ -103,8 +106,8 @@ namespace CasaApp.Api.Migrations
                     b.Property<int>("PlatoId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("Dia")
-                        .HasColumnType("date");
+                    b.Property<int>("Dia")
+                        .HasColumnType("int");
 
                     b.Property<int>("Momento")
                         .HasColumnType("int");
@@ -113,7 +116,7 @@ namespace CasaApp.Api.Migrations
 
                     b.HasIndex("PlatoId");
 
-                    b.ToTable("PlatoMenu", (string)null);
+                    b.ToTable("PlatoMenu");
                 });
 
             modelBuilder.Entity("CasaApp.Api.Models.PlatoIngrediente", b =>
@@ -121,7 +124,7 @@ namespace CasaApp.Api.Migrations
                     b.HasOne("CasaApp.Api.Models.Ingrediente", "Ingrediente")
                         .WithMany("Platos")
                         .HasForeignKey("IngredienteId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("CasaApp.Api.Models.Plato", "Plato")

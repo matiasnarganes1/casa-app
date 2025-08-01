@@ -3,6 +3,7 @@ using System;
 using CasaApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasaApp.Api.Migrations
 {
     [DbContext(typeof(CasaDbContext))]
-    partial class CasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250731230009_UpdatePlatoMenu")]
+    partial class UpdatePlatoMenu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,7 +124,7 @@ namespace CasaApp.Api.Migrations
                     b.HasOne("CasaApp.Api.Models.Ingrediente", "Ingrediente")
                         .WithMany("Platos")
                         .HasForeignKey("IngredienteId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("CasaApp.Api.Models.Plato", "Plato")

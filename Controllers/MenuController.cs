@@ -16,6 +16,36 @@ public class MenuController : ControllerBase
     {
         _service = service;
     }
+    #region Menus
+    [HttpPost]
+    [SwaggerOperation(Summary = "Crear un nuevo menú")]
+    public async Task<IActionResult> Create([FromBody] CreateMenuDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        await _service.CreateMenuAsync(dto);
+
+        return Ok();
+    }
+
+    [HttpGet("{id}")]
+    [SwaggerOperation(Summary = "Obtener un menú por ID")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var menu = await _service.GetMenuByIdAsync(id);
+        if (menu == null) return NotFound();
+        return menu == null ? NotFound() : Ok(menu);
+    }
+
+    [HttpGet]
+    [SwaggerOperation(Summary = "Listar todos los menús")]
+    public async Task<IActionResult> GetAll()
+    {
+        var menus = await _service.GetAllMenusAsync();
+        return menus == null ? NotFound() : Ok(menus);
+    }
+    #endregion
     #region Platos
 
     [HttpGet("platos")]
@@ -23,15 +53,16 @@ public class MenuController : ControllerBase
     public async Task<IActionResult> GetPlatos()
     {
         var platos = await _service.GetAllPlatosAsync();
-        return Ok(platos);
+        return platos == null ? NotFound() : Ok(platos);
     }
 
     [HttpPost("platos")]
     [SwaggerOperation(Summary = "Crea un nuevo plato", Description = "Agrega un nuevo plato al menú")]
     public async Task<IActionResult> CreatePlato([FromBody] CreatePlatoDto plato)
     {
-        var created = await _service.CreatePlatoAsync(plato);
-        return CreatedAtAction(nameof(GetPlatoById), new { id = created.Id }, created);
+        await _service.CreatePlatoAsync(plato);
+
+        return Ok();
     }
 
     [HttpGet("platos/{id}")]
@@ -44,18 +75,18 @@ public class MenuController : ControllerBase
 
     [HttpPut("platos/{id}")]
     [SwaggerOperation(Summary = "Actualiza un plato", Description = "Modifica los detalles de un plato existente")]
-    public async Task<IActionResult> UpdatePlato(int id, [FromBody] Plato plato)
+    public async Task<IActionResult> UpdatePlato(int id, CreatePlatoDto plato)
     {
-        var updated = await _service.UpdatePlatoAsync(id, plato);
-        return updated ? NoContent() : NotFound();
+        await _service.UpdatePlatoAsync(id, plato);
+        return Ok();
     }
 
     [HttpDelete("platos/{id}")]
     [SwaggerOperation(Summary = "Elimina un plato", Description = "Borra un plato del menú")]
     public async Task<IActionResult> DeletePlato(int id)
     {
-        var deleted = await _service.DeletePlatoAsync(id);
-        return deleted ? NoContent() : NotFound();
+        await _service.DeletePlatoAsync(id);
+        return Ok();
     }
 
     #endregion
@@ -66,15 +97,15 @@ public class MenuController : ControllerBase
     public async Task<IActionResult> GetIngredientes()
     {
         var ingredientes = await _service.GetAllIngredientesAsync();
-        return Ok(ingredientes);
+        return ingredientes == null ? NotFound() : Ok(ingredientes);
     }
 
     [HttpPost("ingredientes")]
     [SwaggerOperation(Summary = "Crea un nuevo ingrediente", Description = "Agrega un nuevo ingrediente al menú")]
     public async Task<IActionResult> CreateIngrediente([FromBody] CreateIngredienteDto ingrediente)
     {
-        var created = await _service.CreateIngredienteAsync(ingrediente);
-        return CreatedAtAction(nameof(GetIngredientes), new { id = created.Id }, created);
+        await _service.CreateIngredienteAsync(ingrediente);
+        return Ok();
     }
 
     [HttpGet("ingredientes/{id}")]
@@ -87,26 +118,42 @@ public class MenuController : ControllerBase
 
     [HttpPut("ingredientes/{id}")]
     [SwaggerOperation(Summary = "Actualiza un ingrediente", Description = "Modifica los detalles de un ingrediente existente")]
-    public async Task<IActionResult> UpdateIngrediente(int id, [FromBody] Ingrediente ingrediente)
+    public async Task<IActionResult> UpdateIngrediente(int id, [FromBody] CreateIngredienteDto ingrediente)
     {
-        var updated = await _service.UpdateIngredienteAsync(id, ingrediente);
-        return updated ? NoContent() : NotFound();
+        await _service.UpdateIngredienteAsync(id, ingrediente);
+        return Ok();
     }
 
     [HttpDelete("ingredientes/{id}")]
     [SwaggerOperation(Summary = "Elimina un ingrediente", Description = "Borra un ingrediente del menú")]
     public async Task<IActionResult> DeleteIngrediente(int id)
     {
-        var deleted = await _service.DeleteIngredienteAsync(id);
-        return deleted ? NoContent() : NotFound();
+        await _service.DeleteIngredienteAsync(id);
+        return Ok();
     }
 
-    [HttpPost("platos/{platoId}/ingredientes/{ingredienteId}")]
+    [HttpPost("ingredientes/{platoId}")]
     [SwaggerOperation(Summary = "Agrega un ingrediente a un plato", Description = "Asocia un ingrediente a un plato específico")]
-    public async Task<IActionResult> AddIngredienteToPlato(int platoId, CreateIngredienteEnPlatoDto ingrediente)
+    public async Task<IActionResult> AddIngredienteToPlato(int platoId, List<CreateIngredienteEnPlatoDto> ingrediente)
     {
-        var added = await _service.AddIngredienteToPlatoAsync(platoId, ingrediente);
-        return added ? NoContent() : NotFound();
+        await _service.AddIngredienteToPlatoAsync(platoId, ingrediente);
+        return Ok();
+    }
+
+    [HttpDelete("{platoId}/ingredientes/{ingredienteId}")]
+    [SwaggerOperation(Summary = "Elimina un ingrediente a un plato", Description = "Elmina un ingrediente de un plato específico")]
+    public async Task<IActionResult> RemoveIngrediente(int platoId, int ingredienteId)
+    {
+        try
+        {
+            var result = await _service.DeleteIngredienteFromPlatoAsync(platoId, ingredienteId);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
     #endregion
 }
