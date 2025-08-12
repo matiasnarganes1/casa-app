@@ -6,8 +6,20 @@ using Microsoft.EntityFrameworkCore;
 #region Builder
 
 var builder = WebApplication.CreateBuilder(args);
-Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
+// 🔌 Configuración de CORS para permitir solicitudes desde localhost:4200
+var corsPolicyName = "AllowLocalhost";
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: corsPolicyName,
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
 #endregion
 
 #region Configuration
@@ -51,6 +63,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseCors("AllowLocalhost");
 app.MapControllers();
 app.Run();
 

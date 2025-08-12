@@ -9,12 +9,13 @@ public interface IMenuRepository
     Task<MenuDto?> GetByIdAsync(int id);
     Task<Menu?> GetMenuByNameAsync(string name);
     Task<List<MenuDto>> GetAllAsync();
+    Task<bool> DeleteMenuAsync(int id);
     Task<IEnumerable<PlatoDto>> GetAllPlatosAsync();
-    Task<bool> CreatePlatoAsync(CreatePlatoDto plato);
+    Task<PlatoDto> CreatePlatoAsync(PlatoDto plato);
     Task<Plato?> GetPlatoByName(string name);
     Task<PlatoDto?> GetPlatoWithIngredientesAsync(int id);
     Task<bool> AddIngredienteToPlatoAsync(int platoId, CreateIngredienteEnPlatoDto ingrediente);
-    Task<bool> UpdatePlatoAsync(int id, CreatePlatoDto plato);
+    Task<bool> UpdatePlatoAsync(int id, PlatoDto plato);
     Task<bool> DeletePlatoAsync(int id);
     Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync();
     Task<bool> CreateIngredienteAsync(CreateIngredienteDto ingrediente);

@@ -3,6 +3,7 @@ using System;
 using CasaApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasaApp.Api.Migrations
 {
     [DbContext(typeof(CasaDbContext))]
-    partial class CasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250807140702_UpdateIngrediente")]
+    partial class UpdateIngrediente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,6 +56,9 @@ namespace CasaApp.Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Menu", (string)null);
@@ -67,9 +73,6 @@ namespace CasaApp.Api.Migrations
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("Preferencia")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -119,19 +122,6 @@ namespace CasaApp.Api.Migrations
                     b.ToTable("PlatoMenu", (string)null);
                 });
 
-            modelBuilder.Entity("PlatoDiaPreferido", b =>
-                {
-                    b.Property<int>("PlatoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Dia")
-                        .HasColumnType("int");
-
-                    b.HasKey("PlatoId", "Dia");
-
-                    b.ToTable("PlatosDiasPreferidos", (string)null);
-                });
-
             modelBuilder.Entity("CasaApp.Api.Models.PlatoIngrediente", b =>
                 {
                     b.HasOne("CasaApp.Api.Models.Ingrediente", "Ingrediente")
@@ -170,17 +160,6 @@ namespace CasaApp.Api.Migrations
                     b.Navigation("Plato");
                 });
 
-            modelBuilder.Entity("PlatoDiaPreferido", b =>
-                {
-                    b.HasOne("CasaApp.Api.Models.Plato", "Plato")
-                        .WithMany("DiasPreferidos")
-                        .HasForeignKey("PlatoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Plato");
-                });
-
             modelBuilder.Entity("CasaApp.Api.Models.Ingrediente", b =>
                 {
                     b.Navigation("Platos");
@@ -193,8 +172,6 @@ namespace CasaApp.Api.Migrations
 
             modelBuilder.Entity("CasaApp.Api.Models.Plato", b =>
                 {
-                    b.Navigation("DiasPreferidos");
-
                     b.Navigation("Ingredientes");
                 });
 #pragma warning restore 612, 618

@@ -66,8 +66,23 @@ public class MenuService : IMenuService
         return menus;
     }
 
+    public async Task<bool> DeleteMenuAsync(int id)
+    {
+        try
+        {
+            var menu = await _repo.GetByIdAsync(id);
+            if (menu == null) throw new Exception("El menú no existe");
+
+            return await _repo.DeleteMenuAsync(id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error al eliminar el menú: " + ex.Message, ex);
+        }
+    }
+
     public Task<IEnumerable<PlatoDto>> GetAllPlatosAsync() => _repo.GetAllPlatosAsync();
-    public async Task<bool> CreatePlatoAsync(CreatePlatoDto plato)
+    public async Task<PlatoDto> CreatePlatoAsync(PlatoDto plato)
     {
         try
         {
@@ -76,7 +91,7 @@ public class MenuService : IMenuService
 
             var created = await _repo.CreatePlatoAsync(plato);
 
-            return true;
+            return created;
         }
         catch (Exception ex)
         {
@@ -113,7 +128,7 @@ public class MenuService : IMenuService
         }
     }
 
-    public Task<bool> UpdatePlatoAsync(int id, CreatePlatoDto plato) => _repo.UpdatePlatoAsync(id, plato);
+    public Task<bool> UpdatePlatoAsync(int id, PlatoDto plato) => _repo.UpdatePlatoAsync(id, plato);
 
     public Task<bool> DeletePlatoAsync(int id) => _repo.DeletePlatoAsync(id);
     public Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync() => _repo.GetAllIngredientesAsync();

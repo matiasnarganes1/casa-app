@@ -8,4 +8,6 @@ public class IngredienteDto
     [StringLength(100, ErrorMessage = "El nombre del ingrediente no puede exceder los 100 caracteres.")]
     [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "El nombre del ingrediente solo puede contener letras y espacios.")]
     public string Nombre { get; set; } = string.Empty;
+    [Required(ErrorMessage = "El tipo de ingrediente es obligatorio.")]
+    public string Tipo { get; set; }
 }

@@ -12,6 +12,7 @@ public class CasaDbContext : DbContext
     public DbSet<PlatoIngrediente> PlatoIngredientes => Set<PlatoIngrediente>();
     public DbSet<Menu> Menus => Set<Menu>();
     public DbSet<PlatoMenu> PlatoMenus => Set<PlatoMenu>();
+    public DbSet<PlatoDiaPreferido> PlatosDiasPreferidos => Set<PlatoDiaPreferido>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,5 +49,18 @@ public class CasaDbContext : DbContext
             .HasOne(pm => pm.Plato)
             .WithMany()
             .HasForeignKey(pm => pm.PlatoId);
+
+        modelBuilder.Entity<PlatoDiaPreferido>(e =>
+        {
+            e.ToTable("PlatosDiasPreferidos");
+            e.HasKey(x => new { x.PlatoId, x.Dia });
+
+            e.Property(x => x.Dia).HasConversion<int>();
+
+            e.HasOne(x => x.Plato)
+                .WithMany(p => p.DiasPreferidos)
+                .HasForeignKey(x => x.PlatoId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
