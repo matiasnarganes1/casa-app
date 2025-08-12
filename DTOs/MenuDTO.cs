@@ -9,4 +9,5 @@ public class MenuDto
     public DateOnly FechaFin { get; set; }
 
     public List<PlatoEnMenuDto> Platos { get; set; } = new();
+    public ListaDeComprasDto ListaDeCompras { get; set; } = new();
 }

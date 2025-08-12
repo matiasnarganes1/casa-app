@@ -1,8 +1,6 @@
-using System.Reflection.Metadata.Ecma335;
 using CasaApp.Api.DTOs;
 using CasaApp.Api.Models;
 using CasaApp.Api.Repositories;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace CasaApp.Api.Services;
 
@@ -15,122 +13,91 @@ public class MenuService : IMenuService
         _repo = repo;
     }
 
-    public async Task<bool> CreateMenuAsync(CreateMenuDto dto)
+    public async Task<MenuDto?> CreateMenuAsync(CreateMenuDto dto)
     {
-        try
-        {
-            var existingMenu = await _repo.GetMenuByNameAsync(dto.Nombre);
+        var existingMenu = await _repo.GetMenuByNameAsync(dto.Nombre);
+        if (existingMenu is not null) throw new InvalidOperationException("El menú ya existe.");
 
-            if (existingMenu != null)
-                throw new Exception("El menú ya existe");
+        var created = await _repo.CreateMenuAsync(dto);
+        if (created is null) return null;
 
-            await _repo.CreateMenuAsync(dto);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Error al crear el menú: " + ex.Message, ex);
-        }
+        var platos = created.Platos.ToList();
 
+        var lunchesToSkip = new HashSet<(DateOnly day, int platoId)>(
+            platos
+                .Where(pm => pm.Momento == MomentoDelDia.Cena && !pm.Plato.OneShot)
+                .SelectMany(dinner =>
+                    platos.Where(x =>
+                        x.Momento == MomentoDelDia.Almuerzo &&
+                        x.PlatoId == dinner.PlatoId &&
+                        x.Dia == dinner.Dia.AddDays(1))
+                    .Select(lunch => (lunch.Dia, lunch.PlatoId))
+                )
+        );
+
+        var agregados = platos
+            .Where(pm => !(pm.Momento == MomentoDelDia.Almuerzo && lunchesToSkip.Contains((pm.Dia, pm.PlatoId))))
+            .SelectMany(pm => pm.Plato.Ingredientes)
+            .GroupBy(pi => new { pi.IngredienteId, pi.UnidadMedida })
+            .Select(g => new ListaDeComprasItem
+            {
+                IngredienteId = g.Key.IngredienteId,
+                UnidadMedida = g.Key.UnidadMedida,
+                CantidadTotal = g.Sum(x => x.Cantidad)
+            })
+            .ToList();
+
+        await _repo.UpsertShoppingListAsync(created.Id, agregados);
+
+        var dtoCreated = await GetMenuByIdAsync(created.Id);
+        return dtoCreated;
     }
 
     public async Task<MenuDto?> GetMenuByIdAsync(int id)
     {
         var menu = await _repo.GetByIdAsync(id);
-
-        if (menu == null) return null;
-
-        MenuDto menuDto = new MenuDto
-        {
-            Id = menu.Id,
-            Nombre = menu.Nombre,
-            Tipo = menu.Tipo,
-            FechaInicio = menu.FechaInicio,
-            FechaFin = menu.FechaFin,
-            Platos = menu.Platos.Select(p => new PlatoEnMenuDto
-            {
-                PlatoId = p.PlatoId,
-                Nombre = p.Nombre,
-                Dia = p.Dia,
-                Momento = p.Momento
-            }).ToList()
-        };
-
-        return menuDto;
+        return menu;
     }
 
-    public async Task<List<MenuDto>> GetAllMenusAsync()
-    {
-        var menus = await _repo.GetAllAsync();
-
-        return menus;
-    }
+    public Task<List<MenuDto>> GetAllMenusAsync() => _repo.GetAllAsync();
 
     public async Task<bool> DeleteMenuAsync(int id)
     {
-        try
-        {
-            var menu = await _repo.GetByIdAsync(id);
-            if (menu == null) throw new Exception("El menú no existe");
-
-            return await _repo.DeleteMenuAsync(id);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Error al eliminar el menú: " + ex.Message, ex);
-        }
+        var exists = await _repo.GetByIdAsync(id);
+        if (exists is null) return false;
+        return await _repo.DeleteMenuAsync(id);
     }
 
     public Task<IEnumerable<PlatoDto>> GetAllPlatosAsync() => _repo.GetAllPlatosAsync();
+
     public async Task<PlatoDto> CreatePlatoAsync(PlatoDto plato)
     {
-        try
-        {
-            var platoExists = await _repo.GetPlatoByName(plato.Nombre);
-            if (platoExists != null) throw new Exception("El plato ya existe");
-
-            var created = await _repo.CreatePlatoAsync(plato);
-
-            return created;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Error al crear el plato: " + ex.Message, ex);
-        }
+        var exists = await _repo.GetPlatoByName(plato.Nombre);
+        if (exists is not null) throw new InvalidOperationException("El plato ya existe.");
+        return await _repo.CreatePlatoAsync(plato);
     }
 
     public Task<PlatoDto?> GetPlatoWithIngredientesAsync(int id) => _repo.GetPlatoWithIngredientesAsync(id);
 
     public async Task<bool> AddIngredienteToPlatoAsync(int platoId, List<CreateIngredienteEnPlatoDto> ingredientes)
     {
-        try
+        if (ingredientes is null || ingredientes.Count == 0) throw new ArgumentException("La lista de ingredientes no puede estar vacía.");
+        var platoExists = await _repo.GetPlatoWithIngredientesAsync(platoId);
+        if (platoExists is null) throw new InvalidOperationException("El plato no existe.");
+
+        foreach (var i in ingredientes)
         {
-            if (ingredientes == null || !ingredientes.Any())
-                throw new ArgumentException("La lista de ingredientes no puede estar vacía.");
-
-            var platoExists = await _repo.GetPlatoWithIngredientesAsync(platoId);
-            if (platoExists == null) throw new Exception("El plato no existe.");
-
-            foreach (var item in ingredientes)
-            {
-                var ingredienteExists = await _repo.GetIngredienteAsync(item.IngredienteId);
-                if (ingredienteExists == null)
-                    throw new Exception($"El ingrediente con ID {item.IngredienteId} no existe.");
-
-                await _repo.AddIngredienteToPlatoAsync(platoId, item);
-            }
-
-            return true;
+            var ing = await _repo.GetIngredienteAsync(i.IngredienteId);
+            if (ing is null) throw new InvalidOperationException($"El ingrediente con ID {i.IngredienteId} no existe.");
+            await _repo.AddIngredienteToPlatoAsync(platoId, i);
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Error al agregar ingredientes al plato: " + ex.Message, ex);
-        }
+        return true;
     }
 
     public Task<bool> UpdatePlatoAsync(int id, PlatoDto plato) => _repo.UpdatePlatoAsync(id, plato);
 
     public Task<bool> DeletePlatoAsync(int id) => _repo.DeletePlatoAsync(id);
+
     public Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync() => _repo.GetAllIngredientesAsync();
 
     public Task<bool> CreateIngredienteAsync(CreateIngredienteDto ingrediente) => _repo.CreateIngredienteAsync(ingrediente);
@@ -141,6 +108,7 @@ public class MenuService : IMenuService
 
     public Task<bool> DeleteIngredienteAsync(int id) => _repo.DeleteIngredienteAsync(id);
 
-    public Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId) 
-        => _repo.DeleteIngredienteFromPlatoAsync(platoId, ingredienteId);
+    public Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId) => _repo.DeleteIngredienteFromPlatoAsync(platoId, ingredienteId);
+
+    public Task<IngredienteDto?> GetIngredienteByNameAsync(string nombre) => _repo.GetIngredienteByNameAsync(nombre);
 }

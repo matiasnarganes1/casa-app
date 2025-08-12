@@ -5,7 +5,7 @@ namespace CasaApp.Api.Repositories;
 
 public interface IMenuRepository
 {
-    Task<bool> CreateMenuAsync(CreateMenuDto menu);
+    Task<Menu?> CreateMenuAsync(CreateMenuDto menu);
     Task<MenuDto?> GetByIdAsync(int id);
     Task<Menu?> GetMenuByNameAsync(string name);
     Task<List<MenuDto>> GetAllAsync();
@@ -20,7 +20,10 @@ public interface IMenuRepository
     Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync();
     Task<bool> CreateIngredienteAsync(CreateIngredienteDto ingrediente);
     Task<IngredienteDto?> GetIngredienteAsync(int id);
+    Task<IngredienteDto?> GetIngredienteByNameAsync(string nombre);
     Task<bool> UpdateIngredienteAsync(int id, CreateIngredienteDto ingrediente);
     Task<bool> DeleteIngredienteAsync(int id);
     Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId);
+    Task<Menu?> GetMenuWithPlatosAndIngredientesAsync(int menuId);
+    Task UpsertShoppingListAsync(int menuId, IEnumerable<ListaDeComprasItem> items);
 }

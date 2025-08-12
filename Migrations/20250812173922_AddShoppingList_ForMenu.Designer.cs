@@ -3,6 +3,7 @@ using System;
 using CasaApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasaApp.Api.Migrations
 {
     [DbContext(typeof(CasaDbContext))]
-    partial class CasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250812173922_AddShoppingList_ForMenu")]
+    partial class AddShoppingList_ForMenu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,6 +69,10 @@ namespace CasaApp.Api.Migrations
                     b.Property<int>("IngredienteId")
                         .HasColumnType("int");
 
+                    b.Property<string>("IngredienteNombre")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("ListaDeComprasId")
                         .HasColumnType("int");
 
@@ -74,8 +81,6 @@ namespace CasaApp.Api.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("IngredienteId");
 
                     b.HasIndex("ListaDeComprasId", "IngredienteId", "UnidadMedida")
                         .IsUnique();
@@ -113,9 +118,6 @@ namespace CasaApp.Api.Migrations
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool>("OneShot")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Preferencia")
                         .HasColumnType("int");
@@ -194,19 +196,11 @@ namespace CasaApp.Api.Migrations
 
             modelBuilder.Entity("CasaApp.Api.Models.ListaDeComprasItem", b =>
                 {
-                    b.HasOne("CasaApp.Api.Models.Ingrediente", "Ingrediente")
-                        .WithMany()
-                        .HasForeignKey("IngredienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("CasaApp.Api.Models.ListaDeCompras", "ListaDeCompras")
                         .WithMany("Items")
                         .HasForeignKey("ListaDeComprasId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Ingrediente");
 
                     b.Navigation("ListaDeCompras");
                 });

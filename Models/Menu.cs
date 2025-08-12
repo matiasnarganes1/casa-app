@@ -1,4 +1,5 @@
 namespace CasaApp.Api.Models;
+
 public class Menu
 {
     public int Id { get; set; }
@@ -6,4 +7,5 @@ public class Menu
     public DateOnly FechaInicio { get; set; }
     public DateOnly FechaFin { get; set; }
     public ICollection<PlatoMenu> Platos { get; set; } = new List<PlatoMenu>();
+    public ListaDeCompras? ListaDeCompras { get; set; }
 }

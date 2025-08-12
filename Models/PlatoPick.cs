@@ -3,5 +3,6 @@ namespace CasaApp.Api.Models;
 {
     public int Id { get; set; }
     public int Preferencia { get; set; }
+    public bool OneShot { get; set; }
     public HashSet<DayOfWeek> Preferidos { get; set; } = new();
 }

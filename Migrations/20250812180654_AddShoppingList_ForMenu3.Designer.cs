@@ -3,6 +3,7 @@ using System;
 using CasaApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CasaApp.Api.Migrations
 {
     [DbContext(typeof(CasaDbContext))]
-    partial class CasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250812180654_AddShoppingList_ForMenu3")]
+    partial class AddShoppingList_ForMenu3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,9 +116,6 @@ namespace CasaApp.Api.Migrations
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool>("OneShot")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Preferencia")
                         .HasColumnType("int");

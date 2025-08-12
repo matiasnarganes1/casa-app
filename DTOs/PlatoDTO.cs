@@ -6,5 +6,6 @@ public class PlatoDto
     public string Nombre { get; set; } = string.Empty;
     public int Preferencia { get; set; }
     public List<string>? DiasPreferidos { get; set; }
+    public bool OneShot { get; set; }
     public List<IngredienteEnPlatoDto> Ingredientes { get; set; } = new();
 }

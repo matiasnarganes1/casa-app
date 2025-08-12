@@ -5,7 +5,7 @@ namespace CasaApp.Api.Services;
 
 public interface IMenuService
 {
-    Task<bool> CreateMenuAsync(CreateMenuDto dto);
+    Task<MenuDto?> CreateMenuAsync(CreateMenuDto dto);
     Task<MenuDto?> GetMenuByIdAsync(int id);
     Task<List<MenuDto>> GetAllMenusAsync();
     Task<bool> DeleteMenuAsync(int id);
@@ -18,6 +18,7 @@ public interface IMenuService
     Task<IEnumerable<IngredienteDto>> GetAllIngredientesAsync();
     Task<bool> CreateIngredienteAsync(CreateIngredienteDto ingrediente);
     Task<IngredienteDto?> GetIngredienteAsync(int id);
+    Task<IngredienteDto?> GetIngredienteByNameAsync(string nombre);
     Task<bool> UpdateIngredienteAsync(int id, CreateIngredienteDto ingrediente);
     Task<bool> DeleteIngredienteAsync(int id);
     Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId);
