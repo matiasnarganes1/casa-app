@@ -1,9 +1,15 @@
-namespace CasaApp.Api.Models;
+﻿// Models/Ingrediente.cs
+using System.Collections.Generic;
 
-public class Ingrediente
+namespace CasaApp.Api.Models
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-    public TipoIngrediente Tipo { get; set; }
-    public ICollection<PlatoIngrediente> Platos { get; set; } = new List<PlatoIngrediente>();
+    public class Ingrediente
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public TipoIngrediente Tipo { get; set; }
+        public TipoUnidadMedida UnidadMedida { get; set; }
+        public virtual ICollection<PlatoIngrediente> PlatoIngredientes { get; set; } = new HashSet<PlatoIngrediente>();
+        public virtual ICollection<ListaDeComprasItem> ListaDeComprasItems { get; set; } = new HashSet<ListaDeComprasItem>();
+    }
 }

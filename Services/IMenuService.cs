@@ -22,4 +22,7 @@ public interface IMenuService
     Task<bool> UpdateIngredienteAsync(int id, CreateIngredienteDto ingrediente);
     Task<bool> DeleteIngredienteAsync(int id);
     Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId);
+    Task<PagedResult<MenuDto>> GetMenusPagedAsync(int page, int pageSize);
+    Task<PagedResult<PlatoDto>> GetPlatosPagedAsync(int page, int pageSize);
+    Task<PagedResult<IngredienteDto>> GetIngredientesPagedAsync(int page, int pageSize);
 }

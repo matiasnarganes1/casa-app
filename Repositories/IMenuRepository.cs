@@ -26,4 +26,7 @@ public interface IMenuRepository
     Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId);
     Task<Menu?> GetMenuWithPlatosAndIngredientesAsync(int menuId);
     Task UpsertShoppingListAsync(int menuId, IEnumerable<ListaDeComprasItem> items);
+    Task<PagedResult<PlatoDto>> GetPlatosPagedAsync(int page, int pageSize);
+    Task<PagedResult<IngredienteDto>> GetIngredientesPagedAsync(int page, int pageSize);
+    Task<PagedResult<MenuDto>> GetMenusPagedAsync(int page, int pageSize);
 }

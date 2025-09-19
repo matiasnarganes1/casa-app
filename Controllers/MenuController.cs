@@ -40,12 +40,13 @@ public class MenuController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<MenuDto>), StatusCodes.Status200OK)]
-    [SwaggerOperation(Summary = "Listar todos los menús")]
-    public async Task<ActionResult<IEnumerable<MenuDto>>> GetAll()
+    [ProducesResponseType(typeof(PagedResult<MenuDto>), StatusCodes.Status200OK)]
+    [SwaggerOperation(Summary = "Listar menús paginados")]
+    public async Task<ActionResult<PagedResult<MenuDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 12)
     {
-        var menus = await _service.GetAllMenusAsync();
-        return Ok(menus);
+        var result = await _service.GetMenusPagedAsync(page, pageSize);
+        Response.Headers["X-Total-Count"] = result.TotalCount.ToString();
+        return Ok(result);
     }
 
     [HttpDelete("{id:int}")]
@@ -59,12 +60,13 @@ public class MenuController : ControllerBase
     }
 
     [HttpGet("platos")]
-    [ProducesResponseType(typeof(IEnumerable<PlatoDto>), StatusCodes.Status200OK)]
-    [SwaggerOperation(Summary = "Obtiene todos los platos")]
-    public async Task<ActionResult<IEnumerable<PlatoDto>>> GetPlatos()
+    [ProducesResponseType(typeof(PagedResult<PlatoDto>), StatusCodes.Status200OK)]
+    [SwaggerOperation(Summary = "Obtiene platos paginados")]
+    public async Task<ActionResult<PagedResult<PlatoDto>>> GetPlatos([FromQuery] int page = 1, [FromQuery] int pageSize = 12)
     {
-        var platos = await _service.GetAllPlatosAsync();
-        return Ok(platos);
+        var result = await _service.GetPlatosPagedAsync(page, pageSize);
+        Response.Headers["X-Total-Count"] = result.TotalCount.ToString();
+        return Ok(result);
     }
 
     [HttpPost("platos")]
@@ -107,13 +109,23 @@ public class MenuController : ControllerBase
         return ok ? NoContent() : NotFound();
     }
 
-    [HttpGet("ingredientes")]
+    [HttpGet("ingredientes-all")]
     [ProducesResponseType(typeof(IEnumerable<IngredienteDto>), StatusCodes.Status200OK)]
     [SwaggerOperation(Summary = "Obtiene todos los ingredientes")]
     public async Task<ActionResult<IEnumerable<IngredienteDto>>> GetIngredientes()
     {
         var ingredientes = await _service.GetAllIngredientesAsync();
         return Ok(ingredientes);
+    }
+
+    [HttpGet("ingredientes")]
+    [ProducesResponseType(typeof(PagedResult<IngredienteDto>), StatusCodes.Status200OK)]
+    [SwaggerOperation(Summary = "Obtiene ingredientes paginados")]
+    public async Task<ActionResult<PagedResult<IngredienteDto>>> GetIngredientes([FromQuery] int page = 1, [FromQuery] int pageSize = 12)
+    {
+        var result = await _service.GetIngredientesPagedAsync(page, pageSize);
+        Response.Headers["X-Total-Count"] = result.TotalCount.ToString();
+        return Ok(result);
     }
 
     [HttpPost("ingredientes")]

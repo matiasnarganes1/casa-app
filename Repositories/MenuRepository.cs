@@ -2,6 +2,7 @@ using CasaApp.Api.Data;
 using CasaApp.Api.DTOs;
 using CasaApp.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CasaApp.Api.Repositories;
 
@@ -49,7 +50,6 @@ public class MenuRepository : IMenuRepository
         };
 
         _context.Menus.Add(menuEntity);
-        await _context.SaveChangesAsync();
 
         var usadosPorDia = new Dictionary<DayOfWeek, HashSet<int>>();
         var usadosGlobal = new HashSet<int>();
@@ -71,18 +71,18 @@ public class MenuRepository : IMenuRepository
         {
             var dow = dia.ToDateTime(TimeOnly.MinValue).DayOfWeek;
 
-            if (momento == MomentoDelDia.Almuerzo && carryAlmuerzo.TryGetValue(dia, out var platoFromCena))
+            if ((int)momento == (int)MomentoDelDia.Almuerzo && carryAlmuerzo.TryGetValue(dia, out var platoFromCena))
             {
-                rows.Add(new PlatoMenu { MenuId = menuEntity.Id, PlatoId = platoFromCena, Dia = dia, Momento = MomentoDelDia.Almuerzo });
+                rows.Add(new PlatoMenu { Menu = menuEntity, PlatoId = platoFromCena, Dia = dia, Momento = MomentoDelDia.Almuerzo });
                 carryAlmuerzo.Remove(dia);
                 continue;
             }
 
             var pick = PickPlatoForDay(allPlatos, usadosPorDia, usadosGlobal, dow);
 
-            rows.Add(new PlatoMenu { MenuId = menuEntity.Id, PlatoId = pick.Id, Dia = dia, Momento = momento });
+            rows.Add(new PlatoMenu { Menu = menuEntity, PlatoId = pick.Id, Dia = dia, Momento = momento });
 
-            if (momento == MomentoDelDia.Cena && !pick.OneShot)
+            if ((int)momento == (int)MomentoDelDia.Cena && !pick.OneShot)
             {
                 var next = dia.AddDays(1);
                 if (IsSundayToThursday(dia) && next <= menu.FechaFin && momentosHabilitados.Contains(MomentoDelDia.Almuerzo))
@@ -119,9 +119,9 @@ public class MenuRepository : IMenuRepository
             Platos = menu.Platos.Select(p => new PlatoEnMenuDto
             {
                 PlatoId = p.PlatoId,
-                Nombre = p.Plato.Nombre,
+                Nombre = p.Plato!.Nombre,
                 Dia = p.Dia,
-                Momento = p.Momento.ToString()
+                Momento = ((MomentoDelDia)p.Momento).ToString()
             }).ToList(),
             ListaDeCompras = menu.ListaDeCompras == null
                 ? new ListaDeComprasDto()
@@ -132,7 +132,7 @@ public class MenuRepository : IMenuRepository
                     Items = menu.ListaDeCompras.Items.Select(i => new ListaDeComprasItemDto
                     {
                         IngredienteId = i.IngredienteId,
-                        IngredienteNombre = i.Ingrediente.Nombre,
+                        IngredienteNombre = i.Ingrediente!.Nombre,
                         CantidadTotal = i.CantidadTotal,
                         UnidadMedida = i.UnidadMedida
                     }).ToList()
@@ -177,9 +177,9 @@ public class MenuRepository : IMenuRepository
                 Platos = menu.Platos.Select(p => new PlatoEnMenuDto
                 {
                     PlatoId = p.PlatoId,
-                    Nombre = p.Plato.Nombre,
+                    Nombre = p.Plato!.Nombre,
                     Dia = p.Dia,
-                    Momento = p.Momento.ToString()
+                    Momento = ((MomentoDelDia)p.Momento).ToString()
                 }).ToList(),
                 ListaDeCompras = menu.ListaDeCompras == null
                     ? new ListaDeComprasDto()
@@ -187,13 +187,17 @@ public class MenuRepository : IMenuRepository
                     {
                         Id = menu.ListaDeCompras.Id,
                         MenuId = menu.ListaDeCompras.MenuId,
-                        Items = menu.ListaDeCompras.Items.Select(i => new ListaDeComprasItemDto
-                        {
-                            IngredienteId = i.IngredienteId,
-                            IngredienteNombre = i.Ingrediente.Nombre,
-                            CantidadTotal = i.CantidadTotal,
-                            UnidadMedida = i.UnidadMedida
-                        }).ToList()
+                        Items = menu.ListaDeCompras.Items
+                            .OrderBy(i => i.Ingrediente!.Tipo)
+                            .ThenBy(i => i.Ingrediente!.Nombre)
+                            .Select(i => new ListaDeComprasItemDto
+                            {
+                                IngredienteId = i.IngredienteId,
+                                IngredienteNombre = i.Ingrediente!.Nombre,
+                                CantidadTotal = i.CantidadTotal,
+                                UnidadMedida = i.UnidadMedida,
+                                Tipo = i.Ingrediente!.Tipo.ToString()
+                            }).ToList()
                     }
             });
         }
@@ -229,7 +233,7 @@ public class MenuRepository : IMenuRepository
                 Id = pi.Ingrediente!.Id,
                 Nombre = pi.Ingrediente!.Nombre,
                 Cantidad = pi.Cantidad,
-                UnidadMedida = pi.UnidadMedida,
+                UnidadMedida = pi.Ingrediente!.UnidadMedida.ToString()
             }).ToList(),
             DiasPreferidos = p.DiasPreferidos
                 .OrderBy(d => d.Dia)
@@ -248,7 +252,6 @@ public class MenuRepository : IMenuRepository
         };
 
         _context.Platos.Add(platoEntity);
-        await _context.SaveChangesAsync();
 
         var diasEnum = (plato.DiasPreferidos ?? new())
             .Select(DiaSemanaHelper.Parse)
@@ -257,7 +260,7 @@ public class MenuRepository : IMenuRepository
             .Distinct()
             .ToList();
 
-        if (plato.Ingredientes is not null && plato.Ingredientes.Count > 0)
+        if (plato.Ingredientes is not null && plato.Ingredientes.Count() > 0)
         {
             var nuevos = new List<PlatoIngrediente>();
             foreach (var ingrediente in plato.Ingredientes)
@@ -266,10 +269,9 @@ public class MenuRepository : IMenuRepository
                 if (ingredienteEntity == null) throw new InvalidOperationException($"El ingrediente con ID {ingrediente.Id} no existe.");
                 nuevos.Add(new PlatoIngrediente
                 {
-                    PlatoId = platoEntity.Id,
-                    IngredienteId = ingredienteEntity.Id,
+                    Plato = platoEntity,
+                    Ingrediente = ingredienteEntity,
                     Cantidad = ingrediente.Cantidad,
-                    UnidadMedida = ingrediente.UnidadMedida
                 });
             }
             if (nuevos.Count > 0) await _context.PlatoIngredientes.AddRangeAsync(nuevos);
@@ -279,7 +281,7 @@ public class MenuRepository : IMenuRepository
         {
             var rowsDia = diasEnum.Select(d => new PlatoDiaPreferido
             {
-                PlatoId = platoEntity.Id,
+                Plato = platoEntity,
                 Dia = d
             });
             await _context.PlatosDiasPreferidos.AddRangeAsync(rowsDia);
@@ -318,7 +320,7 @@ public class MenuRepository : IMenuRepository
                 Id = pi.Ingrediente!.Id,
                 Nombre = pi.Ingrediente!.Nombre,
                 Cantidad = pi.Cantidad,
-                UnidadMedida = pi.UnidadMedida
+                UnidadMedida = pi.Ingrediente!.UnidadMedida.ToString()
             }).ToList(),
             DiasPreferidos = plato.DiasPreferidos
                 .OrderBy(d => d.Dia)
@@ -348,7 +350,6 @@ public class MenuRepository : IMenuRepository
             PlatoId = platoId,
             IngredienteId = ingrediente.IngredienteId,
             Cantidad = ingrediente.Cantidad,
-            UnidadMedida = ingrediente.UnidadMedida
         };
         _context.PlatoIngredientes.Add(entity);
         await _context.SaveChangesAsync();
@@ -383,7 +384,6 @@ public class MenuRepository : IMenuRepository
                         PlatoId = id,
                         IngredienteId = g.Key,
                         Cantidad = last.Cantidad,
-                        UnidadMedida = last.UnidadMedida
                     };
                 })
                 .ToList();
@@ -435,7 +435,8 @@ public class MenuRepository : IMenuRepository
         {
             Id = i.Id,
             Nombre = i.Nombre,
-            Tipo = i.Tipo.ToString()
+            Tipo = i.Tipo.ToString(),
+            UnidadMedida = i.UnidadMedida.ToString()
         });
     }
 
@@ -445,11 +446,13 @@ public class MenuRepository : IMenuRepository
         if (exists) throw new InvalidOperationException("El ingrediente ya existe.");
 
         var tipoIngrediente = Enum.Parse<TipoIngrediente>(ingrediente.Tipo, true);
+        var unidadMedida = Enum.Parse<TipoUnidadMedida>(ingrediente.UnidadMedida, true);
 
         var entity = new Ingrediente
         {
             Nombre = ingrediente.Nombre.Trim(),
-            Tipo = tipoIngrediente
+            Tipo = tipoIngrediente,
+            UnidadMedida = unidadMedida
         };
         _context.Ingredientes.Add(entity);
         await _context.SaveChangesAsync();
@@ -464,7 +467,8 @@ public class MenuRepository : IMenuRepository
         {
             Id = ingrediente.Id,
             Nombre = ingrediente.Nombre,
-            Tipo = ingrediente.Tipo.ToString()
+            Tipo = ingrediente.Tipo.ToString(),
+            UnidadMedida = ingrediente.UnidadMedida.ToString()
         };
     }
 
@@ -476,7 +480,8 @@ public class MenuRepository : IMenuRepository
         {
             Id = ingrediente.Id,
             Nombre = ingrediente.Nombre,
-            Tipo = ingrediente.Tipo.ToString()
+            Tipo = ingrediente.Tipo.ToString(),
+            UnidadMedida = ingrediente.UnidadMedida.ToString()
         };
     }
 
@@ -490,6 +495,7 @@ public class MenuRepository : IMenuRepository
 
         existing.Nombre = ingrediente.Nombre.Trim();
         existing.Tipo = Enum.Parse<TipoIngrediente>(ingrediente.Tipo, true);
+        existing.UnidadMedida = Enum.Parse<TipoUnidadMedida>(ingrediente.UnidadMedida, true);
 
         _context.Ingredientes.Update(existing);
         await _context.SaveChangesAsync();
@@ -525,27 +531,137 @@ public class MenuRepository : IMenuRepository
                         .ThenInclude(pi => pi.Ingrediente)
             .FirstOrDefaultAsync(m => m.Id == menuId);
     }
+    public async Task<PagedResult<MenuDto>> GetMenusPagedAsync(int page, int pageSize)
+    {
+        var baseQuery = _context.Menus
+            .AsNoTracking()
+            .Include(m => m.ListaDeCompras).ThenInclude(l => l!.Items).ThenInclude(i => i.Ingrediente)
+            .Include(m => m.Platos).ThenInclude(pm => pm.Plato)
+            .OrderBy(m => m.FechaInicio);
+
+        var total = await baseQuery.CountAsync();
+
+        var pageItems = await baseQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var items = pageItems.Select(menu => new MenuDto
+        {
+            Id = menu.Id,
+            Nombre = menu.Nombre,
+            FechaInicio = menu.FechaInicio,
+            FechaFin = menu.FechaFin,
+            Platos = menu.Platos.Select(p => new PlatoEnMenuDto
+            {
+                PlatoId = p.PlatoId,
+                Nombre = p.Plato!.Nombre,
+                Dia = p.Dia,
+                Momento = ((MomentoDelDia)p.Momento).ToString()
+            }).ToList(),
+            ListaDeCompras = menu.ListaDeCompras == null
+                ? new ListaDeComprasDto()
+                : new ListaDeComprasDto
+                {
+                    Id = menu.ListaDeCompras.Id,
+                    MenuId = menu.ListaDeCompras.MenuId,
+                    Items = menu.ListaDeCompras.Items
+                        .OrderBy(i => i.Ingrediente!.Tipo)
+                        .ThenBy(i => i.Ingrediente!.Nombre)
+                        .Select(i => new ListaDeComprasItemDto
+                        {
+                            IngredienteId = i.IngredienteId,
+                            IngredienteNombre = i.Ingrediente!.Nombre,
+                            CantidadTotal = i.CantidadTotal,
+                            UnidadMedida = i.UnidadMedida,
+                            Tipo = i.Ingrediente!.Tipo.ToString()
+                        }).ToList()
+                }
+        }).ToList();
+
+        return new PagedResult<MenuDto> { Items = items, TotalCount = total };
+    }
+    public async Task<PagedResult<PlatoDto>> GetPlatosPagedAsync(int page, int pageSize)
+    {
+        var baseQuery = _context.Platos
+            .AsNoTracking()
+            .Include(d => d.DiasPreferidos)
+            .Include(p => p.Ingredientes).ThenInclude(i => i.Ingrediente)
+            .OrderByDescending(p => p.Preferencia);
+
+        var total = await baseQuery.CountAsync();
+
+        var pageItems = await baseQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var items = pageItems.Select(p => new PlatoDto
+        {
+            Id = p.Id,
+            Nombre = p.Nombre,
+            Preferencia = p.Preferencia,
+            Ingredientes = p.Ingredientes.Select(pi => new IngredienteEnPlatoDto
+            {
+                Id = pi.Ingrediente!.Id,
+                Nombre = pi.Ingrediente!.Nombre,
+                Cantidad = pi.Cantidad,
+                UnidadMedida = pi.Ingrediente!.UnidadMedida.ToString()
+            }).ToList(),
+            DiasPreferidos = p.DiasPreferidos
+                .OrderBy(d => d.Dia)
+                .Select(d => d.Dia.ToStringLabel())
+                .ToList()
+        }).ToList();
+
+        return new PagedResult<PlatoDto> { Items = items, TotalCount = total };
+    }
+
+    public async Task<PagedResult<IngredienteDto>> GetIngredientesPagedAsync(int page, int pageSize)
+    {
+        var baseQuery = _context.Ingredientes
+            .AsNoTracking()
+            .OrderBy(i => i.Nombre);
+
+        var total = await baseQuery.CountAsync();
+
+        var pageItems = await baseQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var items = pageItems.Select(i => new IngredienteDto
+        {
+            Id = i.Id,
+            Nombre = i.Nombre,
+            Tipo = i.Tipo.ToString(),
+            UnidadMedida = i.UnidadMedida.ToString()
+        }).ToList();
+
+        return new PagedResult<IngredienteDto> { Items = items, TotalCount = total };
+    }
 
     public async Task UpsertShoppingListAsync(int menuId, IEnumerable<ListaDeComprasItem> items)
     {
-        var existing = await _context.ListasDeCompras
+        var existing = await _context.ListaDeCompras
             .Include(l => l.Items)
             .FirstOrDefaultAsync(l => l.MenuId == menuId);
 
         if (existing == null)
         {
             var list = new ListaDeCompras { MenuId = menuId, Items = items.ToList() };
-            _context.ListasDeCompras.Add(list);
+            _context.ListaDeCompras.Add(list);
         }
         else
         {
-            _context.ListasDeComprasItems.RemoveRange(existing.Items);
+            _context.ListaDeComprasItems.RemoveRange(existing.Items);
             foreach (var it in items) existing.Items.Add(it);
         }
 
         await _context.SaveChangesAsync();
     }
 
+    // ... PickPlatoForDay / IsSundayToThursday (sin cambios)
     private sealed class PlatoPick
     {
         public int Id { get; set; }
@@ -555,10 +671,10 @@ public class MenuRepository : IMenuRepository
     }
 
     private PlatoPick PickPlatoForDay(
-    List<PlatoPick> allPlatos,
-    Dictionary<DayOfWeek, HashSet<int>> usadosPorDia,
-    HashSet<int> usadosGlobal,
-    DayOfWeek dow)
+        List<PlatoPick> allPlatos,
+        Dictionary<DayOfWeek, HashSet<int>> usadosPorDia,
+        HashSet<int> usadosGlobal,
+        DayOfWeek dow)
     {
         if (!usadosPorDia.TryGetValue(dow, out var usadosDia))
         {

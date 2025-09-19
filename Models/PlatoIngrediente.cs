@@ -1,13 +1,15 @@
-namespace CasaApp.Api.Models;
-
-public class PlatoIngrediente
+﻿namespace CasaApp.Api.Models
 {
-    public int PlatoId { get; set; }
-    public Plato? Plato { get; set; }
+    public class PlatoIngrediente
+    {
+        // composite key: PlatoId + IngredienteId
+        public int PlatoId { get; set; }
+        public int IngredienteId { get; set; }
 
-    public int IngredienteId { get; set; }
-    public Ingrediente? Ingrediente { get; set; }
+        public int Cantidad { get; set; }
 
-    public int Cantidad { get; set; } = 0;
-    public string UnidadMedida { get; set; } = string.Empty;
+        // navigations
+        public virtual Plato? Plato { get; set; }
+        public virtual Ingrediente? Ingrediente { get; set; }
+    }
 }

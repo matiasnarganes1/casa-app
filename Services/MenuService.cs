@@ -1,6 +1,7 @@
 using CasaApp.Api.DTOs;
 using CasaApp.Api.Models;
 using CasaApp.Api.Repositories;
+using System.Linq;
 
 namespace CasaApp.Api.Services;
 
@@ -21,11 +22,12 @@ public class MenuService : IMenuService
         var created = await _repo.CreateMenuAsync(dto);
         if (created is null) return null;
 
+        // En el DbContext scaffoldado la colección de platos en el menú se llama PlatoMenus
         var platos = created.Platos.ToList();
 
         var lunchesToSkip = new HashSet<(DateOnly day, int platoId)>(
             platos
-                .Where(pm => pm.Momento == MomentoDelDia.Cena && !pm.Plato.OneShot)
+                .Where(pm => pm.Momento == MomentoDelDia.Cena && !pm.Plato!.OneShot)
                 .SelectMany(dinner =>
                     platos.Where(x =>
                         x.Momento == MomentoDelDia.Almuerzo &&
@@ -37,12 +39,12 @@ public class MenuService : IMenuService
 
         var agregados = platos
             .Where(pm => !(pm.Momento == MomentoDelDia.Almuerzo && lunchesToSkip.Contains((pm.Dia, pm.PlatoId))))
-            .SelectMany(pm => pm.Plato.Ingredientes)
-            .GroupBy(pi => new { pi.IngredienteId, pi.UnidadMedida })
+            .SelectMany(pm => pm.Plato!.Ingredientes)
+            .GroupBy(pi => new { pi.IngredienteId, UnidadMedida = pi.Ingrediente!.UnidadMedida })
             .Select(g => new ListaDeComprasItem
             {
                 IngredienteId = g.Key.IngredienteId,
-                UnidadMedida = g.Key.UnidadMedida,
+                UnidadMedida = g.Key.UnidadMedida.ToString(),
                 CantidadTotal = g.Sum(x => x.Cantidad)
             })
             .ToList();
@@ -111,4 +113,12 @@ public class MenuService : IMenuService
     public Task<bool> DeleteIngredienteFromPlatoAsync(int platoId, int ingredienteId) => _repo.DeleteIngredienteFromPlatoAsync(platoId, ingredienteId);
 
     public Task<IngredienteDto?> GetIngredienteByNameAsync(string nombre) => _repo.GetIngredienteByNameAsync(nombre);
+    public Task<PagedResult<MenuDto>> GetMenusPagedAsync(int page, int pageSize)
+        => _repo.GetMenusPagedAsync(page, pageSize);
+
+    public Task<PagedResult<PlatoDto>> GetPlatosPagedAsync(int page, int pageSize)
+        => _repo.GetPlatosPagedAsync(page, pageSize);
+
+    public Task<PagedResult<IngredienteDto>> GetIngredientesPagedAsync(int page, int pageSize)
+        => _repo.GetIngredientesPagedAsync(page, pageSize);
 }
